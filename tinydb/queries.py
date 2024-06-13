@@ -328,13 +328,23 @@ class Query(QueryInstance):
         """
         Test for a dict where a provided key does not exist.
 
-        >>> Query().f1.exists()
+        >>> Query().f1.not_exists()
         """
-        return self._generate_test(
-            lambda _: False,
-            ('exists', self._path),
-            allow_empty_path: True
-        )
+        # can't use _generate_test because it assumes fail-to-find is False
+        def runner(value):
+            try:
+                # Resolve path
+                for part in self._path:
+                    if isinstance(part, str):
+                        value = value[part]
+                    else:
+                        value = part(value)
+            except (KeyError, TypeError):
+                return True
+            else:
+                return False
+
+        return QueryInstance(lambda value: runner(value), None)
 
     def exists(self) -> QueryInstance:
         """
