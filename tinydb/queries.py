@@ -324,13 +324,33 @@ class Query(QueryInstance):
             ('>=', self._path, rhs)
         )
 
+
     def not_exists(self) -> QueryInstance:
         """
         Test for a dict where a provided key does not exist.
 
         >>> Query().f1.not_exists()
         """
+        return self._not_exists_helper(
+            ('exists', self._path)
+        )
+
+    def _not_exists_helper(
+            self,
+            hashval: Tuple,
+            allow_empty_path: bool = False
+            ) -> QueryInstance:
+        """
+        Cacher for a query for a dict where a provided key does not exist.
+
+        Duplicates _generate_test but reversing polarity and omitting test.
+        :param hashval: The hash of the query.
+        :param allow_empty_path: (False): allow checking for the root path (though it always
+        """
         # can't use _generate_test because it assumes fail-to-find is False
+        if not self._path and not allow_empty_path:
+            raise ValueError('Query has no path')
+
         def runner(value):
             try:
                 # Resolve path
@@ -344,7 +364,10 @@ class Query(QueryInstance):
             else:
                 return False
 
-        return QueryInstance(lambda value: runner(value), None)
+        return QueryInstance(
+            lambda value: runner(value),
+            (hashval if self.is_cacheable() else None)
+        )
 
     def exists(self) -> QueryInstance:
         """
