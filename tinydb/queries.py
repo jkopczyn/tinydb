@@ -324,6 +324,18 @@ class Query(QueryInstance):
             ('>=', self._path, rhs)
         )
 
+    def not_exists(self) -> QueryInstance:
+        """
+        Test for a dict where a provided key does not exist.
+
+        >>> Query().f1.exists()
+        """
+        return self._generate_test(
+            lambda _: False,
+            ('exists', self._path),
+            allow_empty_path: True
+        )
+
     def exists(self) -> QueryInstance:
         """
         Test for a dict where a provided key exists.
